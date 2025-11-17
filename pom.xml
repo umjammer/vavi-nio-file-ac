@@ -52,9 +52,9 @@
 
   <dependencies>
     <dependency>
-      <groupId>net.sf.applecommander</groupId>
-      <artifactId>bastools-api</artifactId>
-      <version>0.4.1</version>
+      <groupId>org.applecommander</groupId>
+      <artifactId>AppleCommander</artifactId>
+      <version>13.0</version>
     </dependency>
 
     <dependency>

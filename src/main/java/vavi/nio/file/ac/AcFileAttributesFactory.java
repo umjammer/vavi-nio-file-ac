@@ -9,6 +9,7 @@ package vavi.nio.file.ac;
 import java.io.File;
 
 import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase.ExtendedFileAttributesFactory;
+import vavi.nio.file.ac.AcFileSystemDriver.AcEntry;
 
 
 /**
@@ -20,7 +21,7 @@ import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase.ExtendedFil
 public final class AcFileAttributesFactory extends ExtendedFileAttributesFactory {
 
     public AcFileAttributesFactory() {
-        setMetadataClass(File.class);
+        setMetadataClass(AcEntry.class);
         addImplementation("basic", AcBasicFileAttributesProvider.class);
     }
 }

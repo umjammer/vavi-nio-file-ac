@@ -6,12 +6,12 @@
 
 package vavi.nio.file.ac;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileStore;
 
 import com.github.fge.filesystem.attributes.FileAttributesFactory;
 import com.github.fge.filesystem.filestore.FileStoreBase;
+import com.webcodepro.applecommander.storage.FormattedDisk;
 
 
 /**
@@ -24,16 +24,16 @@ import com.github.fge.filesystem.filestore.FileStoreBase;
  */
 public final class AcFileStore extends FileStoreBase {
 
-    private final File root; // TODO how to get quota
+    private final FormattedDisk disk;
 
     /**
      * Constructor
      *
-     * @param root the (valid) Commons VFS drive to use
+     * @param disk the (valid) Commons VFS drive to use
      */
-    public AcFileStore(final File root, final FileAttributesFactory factory) {
-        super("vfs", factory, false);
-        this.root = root;
+    public AcFileStore(FormattedDisk disk, final FileAttributesFactory factory) {
+        super("ac", factory, false);
+        this.disk = disk;
     }
 
     /**
@@ -45,7 +45,7 @@ public final class AcFileStore extends FileStoreBase {
      */
     @Override
     public long getTotalSpace() throws IOException {
-        return 1024 * 1024 * 1024;
+        return disk.getUsedSpace() + disk.getFreeSpace();
     }
 
     /**
@@ -66,7 +66,7 @@ public final class AcFileStore extends FileStoreBase {
      */
     @Override
     public long getUsableSpace() throws IOException {
-        return 1024 * 1024 * 1024;
+        return disk.getFreeSpace();
     }
 
     /**
@@ -85,6 +85,6 @@ public final class AcFileStore extends FileStoreBase {
      */
     @Override
     public long getUnallocatedSpace() throws IOException {
-        return 1024 * 1024 * 1024;
+        return 0;
     }
 }

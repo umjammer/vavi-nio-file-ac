@@ -6,28 +6,36 @@
 
 package vavi.nio.file.ac;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.nio.file.CopyOption;
 import java.nio.file.FileStore;
-import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.github.fge.filesystem.driver.ExtendedFileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
+import com.webcodepro.applecommander.storage.DirectoryEntry;
+import com.webcodepro.applecommander.storage.DiskException;
+import com.webcodepro.applecommander.storage.DiskFullException;
+import com.webcodepro.applecommander.storage.FileEntry;
+import com.webcodepro.applecommander.storage.FileFilter;
+import com.webcodepro.applecommander.storage.FormattedDisk;
+import vavi.nio.file.ac.AcFileSystemDriver.AcEntry;
 
+import static java.util.function.Predicate.not;
 import static vavi.nio.file.Util.isAppleDouble;
-import static vavi.nio.file.Util.toFilenameString;
 
 
 /**
@@ -37,122 +45,315 @@ import static vavi.nio.file.Util.toFilenameString;
  * @version 0.00 2025/11/16 umjammer initial version <br>
  */
 @ParametersAreNonnullByDefault
-public final class AcFileSystemDriver extends ExtendedFileSystemDriver<File> {
+public final class AcFileSystemDriver extends ExtendedFileSystemDriver<AcEntry> {
+
+    private static final Logger logger = System.getLogger(AcFileSystemDriver.class.getName());
+
+    private FormattedDisk disk;
 
     /**
-     * @param env { "baseUrl": "smb://10.3.1.1/Temporary Share/", "ignoreAppleDouble": boolean }
+     * @param disk
+     * @param env  { "ignoreAppleDouble": boolean }
      */
     public AcFileSystemDriver(FileStore fileStore,
                               FileSystemFactoryProvider provider,
-                              Map<String, ?> env) throws IOException {
+                              FormattedDisk disk, Map<String, ?> env) throws IOException {
 
         super(fileStore, provider);
 
+        this.disk = disk;
         setEnv(env);
     }
 
+    private static final String ALTERNATIVE_SLASH = "\u2044";
+
     @Override
-    protected String getFilenameString(File entry) {
-        return entry.getName();
+    protected String getFilenameString(AcEntry entry) {
+        // there are cases in which Apple DOS filename contains '/'
+        return entry.getFilename().replace(File.separator, ALTERNATIVE_SLASH);
     }
 
     @Override
-    protected boolean isFolder(File entry) throws IOException {
+    protected boolean isFolder(AcEntry entry) throws IOException {
         return entry.isDirectory();
     }
 
     @Override
-    protected boolean exists(File entry) throws IOException {
-        return entry.exists();
+    protected boolean exists(AcEntry entry) throws IOException {
+        return !entry.isDeleted();
     }
 
     // VFS might have cache?
     @Override
-    protected File getEntry(Path path) throws IOException {
-        return getEntry(path, true);
-    }
-
-    /**
-     * @param check check existence of the path
-     */
-    private File getEntry(Path path, boolean check) throws IOException {
-//logger.log(Level.TRACE, "path: " + path);
+    protected AcEntry getEntry(Path path) throws IOException {
         if (ignoreAppleDouble && path.getFileName() != null && isAppleDouble(path)) {
             throw new NoSuchFileException("ignore apple double file: " + path);
         }
 
-        File entry = path.toFile();
-//logger.log(Level.TRACE, "entry: " + entry + ", " + entry.exists());
-        if (check) {
-            if (entry.exists()) {
-                return entry;
+        try {
+            AcEntry entry;
+            if (path.getNameCount() == 0) {
+//logger.log(Level.TRACE, "root");
+                return new AcEntry(disk);
             } else {
-                throw new NoSuchFileException(path.toString());
+                // TODO getFile support nested directories?
+                String appleFilename = path.getFileName().toString().replace(ALTERNATIVE_SLASH, File.separator);
+                FileEntry fileEntry = disk.getFile(appleFilename);
+                if (fileEntry == null) throw new NoSuchFileException(appleFilename);
+                entry = new AcEntry(fileEntry);
             }
-        } else {
             return entry;
+        } catch (DiskException e) {
+            throw (NoSuchFileException) new NoSuchFileException(path.toString()).initCause(e);
         }
     }
 
     @Override
-    protected InputStream downloadEntry(File entry, Path path, Set<? extends OpenOption> options) throws IOException {
-        return Files.newInputStream(entry.toPath());
+    protected InputStream downloadEntry(AcEntry entry, Path path, Set<? extends OpenOption> options) throws IOException {
+        return new ByteArrayInputStream(entry.getFileData());
     }
 
     @Override
-    protected OutputStream uploadEntry(File parentEntry, Path path, Set<? extends OpenOption> options) throws IOException {
-        File targetEntry = getEntry(path, false);
-        Files.createFile(targetEntry.toPath());
-        return Files.newOutputStream(targetEntry.toPath());
-    }
+    protected OutputStream uploadEntry(AcEntry parentEntry, Path path, Set<? extends OpenOption> options) throws IOException {
+        try {
+            AcEntry fileEntry = new AcEntry(disk.createFile());
+            return new ByteArrayOutputStream() {
+                boolean done;
+                @Override public void flush() {
+                    try {
+                        disk.setFileData(fileEntry, toByteArray());
+                        done = true;
+                    } catch (DiskException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
 
-    /** */
-    protected List<File> getDirectoryEntries(File dirEntry, Path dir) throws IOException {
-//System.err.println("path: " + dir);
-//Arrays.stream(dirEntry.getChildren()).forEach(System.err::println);
-        return Arrays.stream(dirEntry.listFiles()).collect(Collectors.toList());
-    }
-
-    @Override
-    protected File createDirectoryEntry(File parentEntry, Path dir) throws IOException {
-        File dirEntry = getEntry(dir, false);
-        Files.createDirectory(dirEntry.toPath());
-        return dirEntry;
-    }
-
-    @Override
-    protected boolean hasChildren(File dirEntry, Path dir) throws IOException {
-        return dirEntry.list().length > 0;
-    }
-
-    @Override
-    protected void removeEntry(File entry, Path path) throws IOException {
-        if (!entry.delete()) {
-            throw new IOException("delete failed: " + path);
+                @Override public void close() {
+                    if (!done) flush();
+                }
+            };
+        } catch (DiskException e) {
+            throw new RuntimeException(e);
         }
     }
 
     @Override
-    protected File copyEntry(File sourceEntry, File targetParentEntry, Path source, Path target, Set<CopyOption> options) throws IOException {
-        File targetEntry = getEntry(target, false);
-        Files.copy(sourceEntry.toPath(), targetEntry.toPath());
-        return targetEntry;
+    protected List<AcEntry> getDirectoryEntries(AcEntry dirEntry, Path dir) throws IOException {
+        try {
+            return dirEntry.getFiles().stream().filter(not(FileEntry::isDeleted)).map(AcEntry::new).toList();
+        } catch (NullPointerException | DiskException e) {
+logger.log(Level.TRACE, "dir: " + dirEntry.getFilename() + ", " + dirEntry.isDirectory());
+            throw new IOException(e);
+        }
     }
 
     @Override
-    protected File moveEntry(File sourceEntry, File targetParentEntry, Path source, Path target, boolean targetIsParent) throws IOException {
-        File targetEntry = getEntry(targetIsParent ? target.resolve(toFilenameString(source)) : target, false);
-        Files.move(sourceEntry.toPath(), targetEntry.toPath());
-        return targetEntry;
+    protected AcEntry createDirectoryEntry(AcEntry parentEntry, Path dir) throws IOException {
+        try {
+            if (disk.canCreateDirectories()) {
+                throw new UnsupportedOperationException("doesn't support directory creation.");
+            } else {
+                return new AcEntry(parentEntry.createDirectory(dir.getFileName().toString()));
+            }
+        } catch (DiskException e) {
+            throw new IOException(e);
+        }
     }
 
     @Override
-    protected File moveFolderEntry(File sourceEntry, File targetParentEntry, Path source, Path target, boolean targetIsParent) throws IOException {
+    protected boolean hasChildren(AcEntry dirEntry, Path dir) throws IOException {
+        try {
+            return !dirEntry.getFiles().isEmpty();
+        } catch (DiskException e) {
+            throw new IOException(e);
+        }
+    }
+
+    @Override
+    protected void removeEntry(AcEntry entry, Path path) throws IOException {
+        entry.delete();
+    }
+
+    @Override
+    protected AcEntry copyEntry(AcEntry sourceEntry, AcEntry targetParentEntry, Path source, Path target, Set<CopyOption> options) throws IOException {
+        throw new UnsupportedOperationException("not implemented yet");
+//        FileEntry targetEntry = getEntry(target, false);
+//        Files.copy(sourceEntry.toPath(), targetEntry.toPath());
+//        return targetEntry;
+    }
+
+    @Override
+    protected AcEntry moveEntry(AcEntry sourceEntry, AcEntry targetParentEntry, Path source, Path target, boolean targetIsParent) throws IOException {
+        throw new UnsupportedOperationException("not implemented yet");
+//        FileEntry targetEntry = getEntry(targetIsParent ? target.resolve(toFilenameString(source)) : target, false);
+//        Files.move(sourceEntry.toPath(), targetEntry.toPath());
+//        return targetEntry;
+    }
+
+    @Override
+    protected AcEntry moveFolderEntry(AcEntry sourceEntry, AcEntry targetParentEntry, Path source, Path target, boolean targetIsParent) throws IOException {
         return moveEntry(sourceEntry, targetParentEntry, source, target, targetIsParent);
     }
 
     @Override
-    protected File renameEntry(File sourceEntry, File targetParentEntry, Path source, Path target) throws IOException {
+    protected AcEntry renameEntry(AcEntry sourceEntry, AcEntry targetParentEntry, Path source, Path target) throws IOException {
         return moveEntry(sourceEntry, targetParentEntry, source, target, false);
+    }
+
+    /**
+     * i don't like the specs. that separated file and directory interface like ac project.
+     * bacause we need to create
+     */
+    public static class AcEntry implements FileEntry, DirectoryEntry {
+
+        FileEntry fileEntry;
+        DirectoryEntry directoryEntry;
+
+        AcEntry(FileEntry fileEntry) {
+            this.fileEntry = fileEntry;
+        }
+
+        AcEntry(DirectoryEntry directoryEntry) {
+            this.directoryEntry = directoryEntry;
+        }
+
+        @Override
+        public String getDirname() {
+            return directoryEntry.getDirname();
+        }
+
+        @Override
+        public List<FileEntry> getFiles() throws DiskException {
+            if (fileEntry instanceof DirectoryEntry) return ((DirectoryEntry) fileEntry).getFiles();
+            else if (directoryEntry != null) return directoryEntry.getFiles();
+            else throw new IllegalStateException();
+        }
+
+        @Override
+        public FileEntry createFile() throws DiskException {
+            return directoryEntry.createFile();
+        }
+
+        @Override
+        public DirectoryEntry createDirectory(String name) throws DiskException {
+            return directoryEntry.createDirectory(name);
+        }
+
+        @Override
+        public boolean canCreateDirectories() {
+            return directoryEntry.canCreateDirectories();
+        }
+
+        @Override
+        public boolean canCreateFile() {
+            return directoryEntry.canCreateFile();
+        }
+
+        @Override
+        public String getFilename() {
+            return fileEntry.getFilename();
+        }
+
+        @Override
+        public void setFilename(String filename) {
+            fileEntry.setFilename(filename);
+        }
+
+        @Override
+        public String getFiletype() {
+            return fileEntry.getFiletype();
+        }
+
+        @Override
+        public void setFiletype(String filetype) {
+            fileEntry.setFiletype(filetype);
+        }
+
+        @Override
+        public boolean isLocked() {
+            return fileEntry.isLocked();
+        }
+
+        @Override
+        public void setLocked(boolean lock) {
+            fileEntry.setLocked(lock);
+        }
+
+        @Override
+        public int getSize() {
+            if (fileEntry != null) return fileEntry.getSize();
+            else if (directoryEntry != null) return 0;
+            else throw new IllegalStateException();
+        }
+
+        @Override
+        public boolean isDirectory() {
+            if (fileEntry != null) return fileEntry.isDirectory();
+            else if (directoryEntry != null) return true;
+            else throw new IllegalStateException();
+        }
+
+        @Override
+        public boolean isDeleted() {
+            return fileEntry.isDeleted();
+        }
+
+        @Override
+        public void delete() {
+            fileEntry.delete();
+        }
+
+        @Override
+        public List<String> getFileColumnData(int displayMode) {
+            return fileEntry.getFileColumnData(displayMode);
+        }
+
+        @Override
+        public byte[] getFileData() {
+            return fileEntry.getFileData();
+        }
+
+        @Override
+        public void setFileData(byte[] data) throws DiskFullException {
+            fileEntry.setFileData(data);
+        }
+
+        @Override
+        public FileFilter getSuggestedFilter() {
+            return fileEntry.getSuggestedFilter();
+        }
+
+        @Override
+        public FormattedDisk getFormattedDisk() {
+            if (fileEntry != null) return fileEntry.getFormattedDisk();
+            else if (directoryEntry != null) return directoryEntry.getFormattedDisk();
+            else throw new IllegalStateException();
+        }
+
+        @Override
+        public int getMaximumFilenameLength() {
+            return fileEntry.getMaximumFilenameLength();
+        }
+
+        @Override
+        public boolean needsAddress() {
+            return fileEntry.needsAddress();
+        }
+
+        @Override
+        public void setAddress(int address) {
+            fileEntry.setAddress(address);
+        }
+
+        @Override
+        public int getAddress() {
+            return fileEntry.getAddress();
+        }
+
+        public Object getWrappedObject() {
+            if (fileEntry != null) return fileEntry;
+            else if (directoryEntry != null) return directoryEntry;
+            else throw new IllegalStateException();
+        }
     }
 }

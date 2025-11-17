@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nonnull;
@@ -18,6 +19,11 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.github.fge.filesystem.driver.FileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
+import com.webcodepro.applecommander.storage.DiskFactory;
+import com.webcodepro.applecommander.storage.Disks;
+import com.webcodepro.applecommander.storage.FormattedDisk;
+import org.applecommander.source.Source;
+import org.applecommander.source.Sources;
 
 import static java.lang.System.getLogger;
 
@@ -38,22 +44,30 @@ public final class AcFileSystemRepository extends FileSystemRepositoryBase {
     }
 
     /**
-     * @param uri "ac:protocol:///?alias=alias", sub url (after "ac:") parts will be replaced by properties.
-     *            if you don't use alias, the url must include username, password, host, port.
+     * @param uri "ac:file:///foo/bar.buz"
      */
     @Nonnull
     @Override
     public FileSystemDriver createDriver(URI uri, Map<String, ?> env) throws IOException {
-        String uriString = uri.toString();
-        URI subUri = URI.create(uriString.substring(uriString.indexOf(':') + 1));
-        String protocol = subUri.getScheme();
-logger.log(Level.DEBUG, "protocol: " + protocol);
+        String[] rawSchemeSpecificParts = uri.getRawSchemeSpecificPart().split("!");
+        URI file = URI.create(rawSchemeSpecificParts[0]);
+        if (!"file".equals(file.getScheme())) {
+            // currently only support "file"
+            throw new IllegalArgumentException(file.toString());
+        }
+        if (!file.getRawSchemeSpecificPart().startsWith("/")) {
+            file = URI.create(file.getScheme() + ":" + System.getProperty("user.dir") + "/" + file.getRawSchemeSpecificPart());
+        }
 
-        Map<String, String> params = getParamsMap(subUri);
-        String alias = params.get(AcFileSystemProvider.PARAM_ALIAS);
+logger.log(Level.DEBUG, "path: " + file);
+        Source source = Sources.create(Path.of(file).toFile()).orElseThrow();
+        DiskFactory.Context context = Disks.inspect(source);
+        if (context.disks.isEmpty()) throw new IllegalArgumentException(uri.toString());
+        FormattedDisk disk = context.disks.get(0); // TODO index property
+logger.log(Level.DEBUG, "disk: " + disk.getFormat());
 
-        AcFileStore fileStore = new AcFileStore(null, factoryProvider.getAttributesFactory());
-        return new AcFileSystemDriver(fileStore, factoryProvider, env);
+        AcFileStore fileStore = new AcFileStore(disk, factoryProvider.getAttributesFactory());
+        return new AcFileSystemDriver(fileStore, factoryProvider, disk, env);
     }
 
     /* ad-hoc hack for ignoring checking opacity */

@@ -22,6 +22,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 
 import com.github.fge.filesystem.attributes.provider.BasicFileAttributesProvider;
+import vavi.nio.file.ac.AcFileSystemDriver.AcEntry;
 
 import static java.lang.System.getLogger;
 
@@ -40,9 +41,9 @@ public final class AcBasicFileAttributesProvider extends BasicFileAttributesProv
 
     private static final Logger logger = getLogger(AcBasicFileAttributesProvider.class.getName());
 
-    private final File entry;
+    private final AcEntry entry;
 
-    public AcBasicFileAttributesProvider(@Nonnull File entry) throws IOException {
+    public AcBasicFileAttributesProvider(@Nonnull AcEntry entry) throws IOException {
         this.entry = Objects.requireNonNull(entry);
     }
 
@@ -59,11 +60,7 @@ public final class AcBasicFileAttributesProvider extends BasicFileAttributesProv
      */
     @Override
     public FileTime lastModifiedTime() {
-        try {
-            return Files.getLastModifiedTime(entry.toPath());
-        } catch (IOException e) {
-            return FileTime.fromMillis(0);
-        }
+        return FileTime.fromMillis(0);
     }
 
     /**
@@ -71,7 +68,7 @@ public final class AcBasicFileAttributesProvider extends BasicFileAttributesProv
      */
     @Override
     public boolean isRegularFile() {
-        return entry.isFile();
+        return !entry.isDirectory();
     }
 
     /**
@@ -93,7 +90,7 @@ public final class AcBasicFileAttributesProvider extends BasicFileAttributesProv
      */
     @Override
     public long size() {
-        return isDirectory() ? 0 : entry.length();
+        return isDirectory() ? 0 : entry.getSize();
     }
 
     @Override
