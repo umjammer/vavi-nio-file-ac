@@ -7,6 +7,11 @@
   <artifactId>vavi-nio-file-ac</artifactId>
   <version>0.0.1-SNAPSHOT</version>
 
+  <properties>
+    <vavi-net-fuse.groupId>com.github.umjammer.vavi-apps-fuse</vavi-net-fuse.groupId>
+    <vavi-net-fuse.version>0.1.8</vavi-net-fuse.version>
+  </properties>
+
   <build>
     <plugins>
       <plugin>
@@ -78,11 +83,30 @@
       <artifactId>junit-platform-commons</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-params</artifactId>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-commons</artifactId>
       <version>1.1.15</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>${vavi-net-fuse.groupId}</groupId>
+      <artifactId>vavi-net-fuse</artifactId>
+      <version>${vavi-net-fuse.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>${vavi-net-fuse.groupId}</groupId>
+      <artifactId>vavi-net-fuse</artifactId>
+      <version>${vavi-net-fuse.version}</version>
+      <type>test-jar</type>
       <scope>test</scope>
     </dependency>
   </dependencies>
