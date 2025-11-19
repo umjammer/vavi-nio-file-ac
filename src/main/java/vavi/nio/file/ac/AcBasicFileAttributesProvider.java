@@ -6,10 +6,8 @@
 
 package vavi.nio.file.ac;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.System.Logger;
-import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.GroupPrincipal;
@@ -60,7 +58,7 @@ public final class AcBasicFileAttributesProvider extends BasicFileAttributesProv
      */
     @Override
     public FileTime lastModifiedTime() {
-        return FileTime.fromMillis(0);
+        return FileTime.fromMillis(entry.getLastModificationDateTime());
     }
 
     /**

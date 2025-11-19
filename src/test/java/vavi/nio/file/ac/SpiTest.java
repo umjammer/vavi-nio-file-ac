@@ -6,6 +6,7 @@
 
 package vavi.nio.file.ac;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -32,18 +33,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 2025-11-17 nsano initial version <br>
  */
-@PropsEntity(url = "file:local.properties")
-class AcFileSystemProviderTest {
+@PropsEntity
+class SpiTest {
 
     static boolean localPropertiesExists() {
         return java.nio.file.Files.exists(Paths.get("local.properties"));
     }
 
     @Property
-    String dsk = "src/test/resources/test.dsk";
-
-    @Property(name = "dsk.files")
-    int dskFiles = 16;
+    String dsk = "src/test/resources/prodos.dsk";
 
     @BeforeEach
     void setup() throws Exception {
@@ -65,8 +63,8 @@ Debug.print("uri: " + uri);
         FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
 
         Path root = fs.getRootDirectories().iterator().next();
-        Files.walk(root).forEach(System.err::println);
-        assertEquals(dskFiles, java.nio.file.Files.list(root).count());
+        Files.walk(root).forEach(p -> {try { System.err.printf("%-48s  %s%n", p, Files.getLastModifiedTime(p)); } catch (IOException ignore) {}});
+        assertEquals(64, Files.walk(root).count());
 
         fs.close();
     }
@@ -74,7 +72,7 @@ Debug.print("uri: " + uri);
     @Test
     @DisplayName("download")
     void test2() throws Exception {
-Debug.print("chd: " + dsk);
+Debug.print("disk: " + dsk);
         URI subUri = Path.of(dsk).toUri();
 Debug.print("subUri: " + subUri);
 Debug.print("subUri.path: " + subUri.getPath());
@@ -84,10 +82,10 @@ Debug.print("uri: " + uri);
         FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
 
         Path root = fs.getRootDirectories().iterator().next();
-        if (!Files.exists(Path.of("tmp"))) java.nio.file.Files.createDirectory(Path.of("tmp"));
+        if (!Files.exists(Path.of("tmp"))) Files.createDirectory(Path.of("tmp"));
         Path out = Path.of("tmp", "test2.download");
-        Files.copy(root.resolve("FILE3.txt"), out, StandardCopyOption.REPLACE_EXISTING);
-        assertEquals(6, Files.size(out));
+        Files.copy(root.resolve("DATA/TEXT"), out, StandardCopyOption.REPLACE_EXISTING);
+        assertEquals(289, Files.size(out));
 
         fs.close();
     }

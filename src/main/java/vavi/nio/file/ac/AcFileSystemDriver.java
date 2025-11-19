@@ -21,6 +21,7 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -32,6 +33,8 @@ import com.webcodepro.applecommander.storage.DiskFullException;
 import com.webcodepro.applecommander.storage.FileEntry;
 import com.webcodepro.applecommander.storage.FileFilter;
 import com.webcodepro.applecommander.storage.FormattedDisk;
+import com.webcodepro.applecommander.storage.os.prodos.ProdosDirectoryEntry;
+import com.webcodepro.applecommander.storage.os.prodos.ProdosFileEntry;
 import vavi.nio.file.ac.AcFileSystemDriver.AcEntry;
 
 import static java.util.function.Predicate.not;
@@ -73,6 +76,10 @@ public final class AcFileSystemDriver extends ExtendedFileSystemDriver<AcEntry> 
         return entry.getFilename().replace(File.separator, ALTERNATIVE_SLASH);
     }
 
+    private static String toLocalString(Path path) {
+        return path.getFileName().toString().replace(ALTERNATIVE_SLASH, File.separator);
+    }
+
     @Override
     protected boolean isFolder(AcEntry entry) throws IOException {
         return entry.isDirectory();
@@ -97,7 +104,7 @@ public final class AcFileSystemDriver extends ExtendedFileSystemDriver<AcEntry> 
                 return new AcEntry(disk);
             } else {
                 // TODO getFile support nested directories?
-                String appleFilename = path.getFileName().toString().replace(ALTERNATIVE_SLASH, File.separator);
+                String appleFilename = toLocalString(path);
                 FileEntry fileEntry = disk.getFile(appleFilename);
                 if (fileEntry == null) throw new NoSuchFileException(appleFilename);
                 entry = new AcEntry(fileEntry);
@@ -348,6 +355,16 @@ logger.log(Level.TRACE, "dir: " + dirEntry.getFilename() + ", " + dirEntry.isDir
         @Override
         public int getAddress() {
             return fileEntry.getAddress();
+        }
+
+        public long getLastModificationDateTime() {
+            if (fileEntry instanceof ProdosFileEntry prodosFileEntry) {
+                return prodosFileEntry.getLastModificationDate() != null ? prodosFileEntry.getLastModificationDate().getTime() : 0;
+            } else if (directoryEntry instanceof ProdosDirectoryEntry prodosDirectoryEntry) {
+                return prodosDirectoryEntry.getLastModificationDate() != null ? prodosDirectoryEntry.getLastModificationDate().getTime() : 0;
+            } else {
+                return 0;
+            }
         }
 
         public Object getWrappedObject() {

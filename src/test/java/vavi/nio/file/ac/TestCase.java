@@ -12,6 +12,7 @@ import java.nio.file.Paths;
 import com.webcodepro.applecommander.storage.DiskFactory;
 import com.webcodepro.applecommander.storage.Disks;
 import com.webcodepro.applecommander.storage.os.dos33.DosFormatDisk;
+import com.webcodepro.applecommander.storage.os.prodos.ProdosFormatDisk;
 import org.applecommander.source.Source;
 import org.applecommander.source.Sources;
 import vavi.util.Debug;
@@ -36,7 +37,7 @@ class TestCase {
     }
 
     @Property
-    String dsk = "src/test/resources/test.dsk";
+    String dsk = "src/test/resources/prodos.dsk";
 
     @BeforeEach
     void setup() throws Exception {
@@ -53,9 +54,6 @@ Debug.println("disks: " + context.disks.size());
         var disk = context.disks.get(0);
 Debug.println(disk.getClass() + ", " + disk.getFormat());
 disk.getDiskInformation().stream().map(o -> o.getLabel() + ": " + o.getValue()).forEach(System.out::println);
-        if (disk instanceof DosFormatDisk dosDisk) {
-Debug.println(disk.getDiskName());
-            dosDisk.getFiles().forEach(entry -> System.out.printf("%-30s%s %8d %s %b%n", entry.getFilename(), entry.isDirectory() ? "/" : " ", entry.getSize(), entry.getFiletype(), entry.isDeleted()));
-        }
+        disk.getFiles().forEach(entry -> System.out.printf("%-" + entry.getMaximumFilenameLength() + "s%s %8d %s %b%n", entry.getFilename(), entry.isDirectory() ? "/" : " ", entry.getSize(), entry.getFiletype(), entry.isDeleted()));
     }
 }

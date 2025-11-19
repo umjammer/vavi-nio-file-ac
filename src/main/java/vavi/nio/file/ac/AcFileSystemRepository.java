@@ -45,6 +45,7 @@ public final class AcFileSystemRepository extends FileSystemRepositoryBase {
 
     /**
      * @param uri "ac:file:///foo/bar.buz"
+     * @param env { "volumeNumber": specify number of multiple disk images in a file }
      */
     @Nonnull
     @Override
@@ -59,11 +60,16 @@ public final class AcFileSystemRepository extends FileSystemRepositoryBase {
             file = URI.create(file.getScheme() + ":" + System.getProperty("user.dir") + "/" + file.getRawSchemeSpecificPart());
         }
 
-logger.log(Level.DEBUG, "path: " + file);
+        int volumeNumber = 0;
+        if (env.containsKey("volumeNumber")) {
+            volumeNumber = (int) env.get("volumeNumber");
+        }
+
+        logger.log(Level.DEBUG, "path: " + file);
         Source source = Sources.create(Path.of(file).toFile()).orElseThrow();
         DiskFactory.Context context = Disks.inspect(source);
         if (context.disks.isEmpty()) throw new IllegalArgumentException(uri.toString());
-        FormattedDisk disk = context.disks.get(0); // TODO index property
+        FormattedDisk disk = context.disks.get(volumeNumber);
 logger.log(Level.DEBUG, "disk: " + disk.getFormat());
 
         AcFileStore fileStore = new AcFileStore(disk, factoryProvider.getAttributesFactory());
