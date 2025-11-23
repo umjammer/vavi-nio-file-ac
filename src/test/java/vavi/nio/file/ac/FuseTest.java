@@ -32,7 +32,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 
 /**
- * Main4. (fuse)
+ * FuseTest. (AppleCommander)
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2021/11/20 umjammer initial version <br>

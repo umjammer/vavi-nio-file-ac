@@ -42,7 +42,7 @@ public final class AcFileSystemProvider extends FileSystemProviderBase {
         url = url.replace("%2F", "/");
         url = url.replace("+", "%20");
         URI uri = URI.create("ac:file:" + url);
-        logger.log(Level.DEBUG, "uri: " + uri);
+logger.log(Level.DEBUG, "uri: " + uri);
         return uri;
     }
 }

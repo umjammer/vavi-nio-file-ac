@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 2025-11-17 nsano initial version <br>
  */
-@PropsEntity
+@PropsEntity(url = "file:local.properties")
 class SpiTest {
 
     static boolean localPropertiesExists() {
