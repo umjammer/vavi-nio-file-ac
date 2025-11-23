@@ -65,7 +65,7 @@ public final class AcFileSystemRepository extends FileSystemRepositoryBase {
             volumeNumber = (int) env.get("volumeNumber");
         }
 
-        logger.log(Level.DEBUG, "path: " + file);
+logger.log(Level.DEBUG, "path: " + file);
         Source source = Sources.create(Path.of(file).toFile()).orElseThrow();
         DiskFactory.Context context = Disks.inspect(source);
         if (context.disks.isEmpty()) throw new IllegalArgumentException(uri.toString());

@@ -90,7 +90,6 @@ public final class AcFileSystemDriver extends ExtendedFileSystemDriver<AcEntry> 
         return !entry.isDeleted();
     }
 
-    // VFS might have cache?
     @Override
     protected AcEntry getEntry(Path path) throws IOException {
         if (ignoreAppleDouble && path.getFileName() != null && isAppleDouble(path)) {
