@@ -9,28 +9,32 @@
 
 a java nio filesystem spi powered by [AppleCommander](https://github.com/AppleCommander/AppleCommander)
 
+all formats are mounted by fuse also!
+
 ### Status
 
-| ext          | type                      | list | upload | download | copy | move | rm | mkdir | description                                |
-|--------------|---------------------------|:----:|:------:|:--------:|:----:|:----:|:--:|:-----:|--------------------------------------------|
-| DSK, DO, D16 | DOS 3.x                   |  ✅️  |        |    ✅️    |      |      |    |       | 140K DOS-ordered images                    |
-| PO           | DOS 3.x                   |  ✅️  |        |          |      |      |    |       | 140K ProDOS-ordered images                 |
-| NIB          | DOS 3.x                   |  ✅️  |        |          |      |      |    |       | 13-sector and 16-sector Nibble images      |
-| DC           | DOS 3.x                   |  ✅️  |        |          |      |      |    |       | Disk Copy Images                           |
-| D13          | DOS 3.x                   |  ✅️  |        |          |      |      |    |       | 13-sector DOS-ordered images               |
-| 2MG, 2IMG    | DOS 3.x                   |  ✅️  |        |          |      |      |    |       | Universal Disk Images                      |
-| GZ(DSK)      | DOS 3.x                   |  ✅️  |        |          |      |      |    |       | Compressed images                          |
-| WOZ          |                           |  ️   |        |          |      |      |    |       | WOZ Disk Image, version 1 and 2 5.25" only |
-| HDV          |                           |  ️   |        |          |      |      |    |       | 32MB ApplePC Hard Disk images              |
-|              |                           |  ️   |        |          |      |      |    |       |                                            |
-|              | DOS                       |  ️   |        |          |      |      |    |       | both 13-sector and 16-sector               |
-|              | UniDOS, OzDOS             |  ️   |        |          |      |      |    |       | 800K formats only                          |
-|              | ProDOS                    |  ️   |        |          |      |      |    |       |                                            |
-|              | Apple Pascal              |  ️   |        |          |      |      |    |       | 140K and 800K formats                      |
-|              | SSI's RDOS                |  ️   |        |          |      |      |    |       | 140K formats only                          |
-|              | CP/M                      |  ️   |        |          |      |      |    |       | probably only 140K formats                 |
-|              | Gutenberg Word Processor  |  ️   |        |          |      |      |    |       |                                            |
-|              | NakedOS                   |  ️   |        |          |      |      |    |       | see the Super-Mon page                     |
+| ext          | type                      | list  | upload | download | copy | move | rm | mkdir | description                                |
+|--------------|---------------------------|:-----:|:------:|:--------:|:----:|:----:|:--:|:-----:|--------------------------------------------|
+| DSK, DO, D16 | DOS 3.x                   |  ✅️   |        |    ✅️    |      |      |    |       | 140K DOS-ordered images                    |
+| PO           | DOS 3.x                   |  ✅️   |        |          |      |      |    |       | 140K ProDOS-ordered images                 |
+| NIB          | DOS 3.x                   |  ✅️   |        |          |      |      |    |       | 13-sector and 16-sector Nibble images      |
+| DC           | DOS 3.x                   |  ✅️   |        |          |      |      |    |       | Disk Copy Images                           |
+| D13          | DOS 3.x                   |  ✅️   |        |          |      |      |    |       | 13-sector DOS-ordered images               |
+| 2MG, 2IMG    | DOS 3.x                   |  ✅️   |        |          |      |      |    |       | Universal Disk Images                      |
+| GZ(DSK)      | DOS 3.x                   |  ✅️   |        |          |      |      |    |       | Compressed images                          |
+| WOZ          |                           |   ️   |        |          |      |      |    |       | WOZ Disk Image, version 1 and 2 5.25" only |
+| HDV          |                           |   ️   |        |          |      |      |    |       | 32MB ApplePC Hard Disk images              |
+|              |                           |   ️   |        |          |      |      |    |       |                                            |
+|              | DOS                       |   ️   |        |          |      |      |    |       | both 13-sector and 16-sector               |
+|              | UniDOS, OzDOS             |   ️   |        |          |      |      |    |       | 800K formats only                          |
+|              | ProDOS                    |   ️   |        |          |      |      |    |       |                                            |
+|              | Apple Pascal              |   ️   |        |          |      |      |    |       | 140K and 800K formats                      |
+|              | SSI's RDOS                |   ️   |        |          |      |      |    |       | 140K formats only                          |
+|              | CP/M                      |   ️   |        |          |      |      |    |       | probably only 140K formats                 |
+|              | Gutenberg Word Processor  |   ️   |        |          |      |      |    |       |                                            |
+|              | NakedOS                   |   ️   |        |          |      |      |    |       | see the Super-Mon page                     |
+|              |                           |   ️   |        |          |      |      |    |       |                                            |
+| fuse         |                           | ✅ ️️  |        |    ✅️    |      |      |    |       |                                            |
 
 ## Install
 
@@ -49,9 +53,11 @@ a java nio filesystem spi powered by [AppleCommander](https://github.com/AppleCo
 ## References
 
  * https://github.com/AppleCommander/AppleCommander/issues/207
+ * https://github.com/badvision/jace
 
 ## TODO
 
+ * check nested directory 3 ot more
  * raw disk access
 
 ---
