@@ -158,9 +158,9 @@ logger.log(Level.TRACE, "dir: " + dirEntry.getFilename() + ", " + dirEntry.isDir
     protected AcEntry createDirectoryEntry(AcEntry parentEntry, Path dir) throws IOException {
         try {
             if (disk.canCreateDirectories()) {
-                throw new UnsupportedOperationException("doesn't support directory creation.");
-            } else {
                 return new AcEntry(parentEntry.createDirectory(dir.getFileName().toString()));
+            } else {
+                throw new UnsupportedOperationException("doesn't support directory creation.");
             }
         } catch (DiskException e) {
             throw new IOException(e);
