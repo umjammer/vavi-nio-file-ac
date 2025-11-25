@@ -35,6 +35,7 @@ import com.webcodepro.applecommander.storage.FileFilter;
 import com.webcodepro.applecommander.storage.FormattedDisk;
 import com.webcodepro.applecommander.storage.os.prodos.ProdosDirectoryEntry;
 import com.webcodepro.applecommander.storage.os.prodos.ProdosFileEntry;
+import vavi.nio.file.Util;
 import vavi.nio.file.ac.AcFileSystemDriver.AcEntry;
 
 import static java.util.function.Predicate.not;
@@ -52,10 +53,10 @@ public final class AcFileSystemDriver extends ExtendedFileSystemDriver<AcEntry> 
 
     private static final Logger logger = System.getLogger(AcFileSystemDriver.class.getName());
 
-    private FormattedDisk disk;
+    private final FormattedDisk disk;
 
     /**
-     * @param disk
+     * @param disk disk image
      * @param env  { "ignoreAppleDouble": boolean }
      */
     public AcFileSystemDriver(FileStore fileStore,
@@ -121,26 +122,17 @@ public final class AcFileSystemDriver extends ExtendedFileSystemDriver<AcEntry> 
 
     @Override
     protected OutputStream uploadEntry(AcEntry parentEntry, Path path, Set<? extends OpenOption> options) throws IOException {
-        try {
-            AcEntry fileEntry = new AcEntry(disk.createFile());
-            return new ByteArrayOutputStream() {
-                boolean done;
-                @Override public void flush() {
-                    try {
-                        disk.setFileData(fileEntry, toByteArray());
-                        done = true;
-                    } catch (DiskException e) {
-                        throw new RuntimeException(e);
-                    }
+        return new Util.OutputStreamForUploading() {
+            @Override
+            protected void onClosed() throws IOException {
+                try {
+                    AcEntry fileEntry = new AcEntry(disk.createFile());
+                    disk.setFileData(fileEntry, getInputStream().readAllBytes());
+                } catch (DiskException e) {
+                    throw new RuntimeException(e);
                 }
-
-                @Override public void close() {
-                    if (!done) flush();
-                }
-            };
-        } catch (DiskException e) {
-            throw new RuntimeException(e);
-        }
+            }
+        };
     }
 
     @Override
