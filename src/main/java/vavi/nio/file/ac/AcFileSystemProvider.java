@@ -36,6 +36,7 @@ public final class AcFileSystemProvider extends FileSystemProviderBase {
     /**
      * utility
      * TODO consider more
+     * @return special url encoded "ac:file" + path
      */
     public static URI createURI(String path) throws IOException {
         String url = URLEncoder.encode(Paths.get(path).toAbsolutePath().toString(), StandardCharsets.UTF_8);
