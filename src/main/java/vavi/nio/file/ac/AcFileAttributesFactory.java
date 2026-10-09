@@ -6,8 +6,6 @@
 
 package vavi.nio.file.ac;
 
-import java.io.File;
-
 import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase.ExtendedFileAttributesFactory;
 import vavi.nio.file.ac.AcFileSystemDriver.AcEntry;
 

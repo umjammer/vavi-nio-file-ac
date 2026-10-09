@@ -1,7 +1,7 @@
 [![Release](https://jitpack.io/v/umjammer/vavi-nio-file-ac.svg)](https://jitpack.io/#umjammer/vavi-nio-file-ac)
 [![Java CI](https://github.com/umjammer/vavi-nio-file-ac/actions/workflows/maven.yml/badge.svg)](https://github.com/umjammer/vavi-nio-file-ac/actions/workflows/maven.yml)
 [![CodeQL](https://github.com/umjammer/vavi-nio-file-ac/actions/workflows/codeql.yml/badge.svg)](https://github.com/umjammer/vavi-nio-file-ac/actions/workflows/codeql.yml)
-![Java](https://img.shields.io/badge/Java-21-b07219)
+![Java](https://img.shields.io/badge/Java-25-b07219)
 
 # vavi-nio-file-ac
 
@@ -9,7 +9,7 @@
 
 a java nio filesystem spi powered by [AppleCommander](https://github.com/AppleCommander/AppleCommander)
 
-all formats are mounted by fuse also!
+you can also mount all formats using fuse.
 
 ### Status
 
@@ -57,7 +57,7 @@ all formats are mounted by fuse also!
 
 ## TODO
 
- * check nested directory 3 ot more
+ * check nested directory 3 or more
  * raw disk access
 
 ---

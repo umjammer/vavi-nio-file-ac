@@ -54,11 +54,7 @@ class SpiTest {
     @DisplayName("list")
     void test1() throws Exception {
 Debug.print("dsk: " + dsk);
-        URI subUri = Path.of(dsk).toUri();
-Debug.print("subUri: " + subUri);
-Debug.print("subUri.path: " + subUri.getPath());
-        URI uri = URI.create("ac:" + subUri);
-Debug.print("uri: " + uri);
+        URI uri = AcFileSystemProvider.createURI(dsk);
 
         FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
 

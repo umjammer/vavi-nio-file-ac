@@ -7,7 +7,6 @@
 package vavi.nio.file.ac;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,7 +20,6 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -35,6 +33,7 @@ import com.webcodepro.applecommander.storage.FileFilter;
 import com.webcodepro.applecommander.storage.FormattedDisk;
 import com.webcodepro.applecommander.storage.os.prodos.ProdosDirectoryEntry;
 import com.webcodepro.applecommander.storage.os.prodos.ProdosFileEntry;
+import vavi.nio.file.Util;
 import vavi.nio.file.ac.AcFileSystemDriver.AcEntry;
 
 import static java.util.function.Predicate.not;
@@ -52,10 +51,10 @@ public final class AcFileSystemDriver extends ExtendedFileSystemDriver<AcEntry> 
 
     private static final Logger logger = System.getLogger(AcFileSystemDriver.class.getName());
 
-    private FormattedDisk disk;
+    private final FormattedDisk disk;
 
     /**
-     * @param disk
+     * @param disk disk image
      * @param env  { "ignoreAppleDouble": boolean }
      */
     public AcFileSystemDriver(FileStore fileStore,
@@ -121,26 +120,17 @@ public final class AcFileSystemDriver extends ExtendedFileSystemDriver<AcEntry> 
 
     @Override
     protected OutputStream uploadEntry(AcEntry parentEntry, Path path, Set<? extends OpenOption> options) throws IOException {
-        try {
-            AcEntry fileEntry = new AcEntry(disk.createFile());
-            return new ByteArrayOutputStream() {
-                boolean done;
-                @Override public void flush() {
-                    try {
-                        disk.setFileData(fileEntry, toByteArray());
-                        done = true;
-                    } catch (DiskException e) {
-                        throw new RuntimeException(e);
-                    }
+        return new Util.OutputStreamForUploading() {
+            @Override
+            protected void onClosed() throws IOException {
+                try {
+                    AcEntry fileEntry = new AcEntry(disk.createFile());
+                    disk.setFileData(fileEntry, getInputStream().readAllBytes());
+                } catch (DiskException e) {
+                    throw new RuntimeException(e);
                 }
-
-                @Override public void close() {
-                    if (!done) flush();
-                }
-            };
-        } catch (DiskException e) {
-            throw new RuntimeException(e);
-        }
+            }
+        };
     }
 
     @Override
@@ -191,7 +181,7 @@ logger.log(Level.TRACE, "dir: " + dirEntry.getFilename() + ", " + dirEntry.isDir
     @Override
     protected AcEntry moveEntry(AcEntry sourceEntry, AcEntry targetParentEntry, Path source, Path target, boolean targetIsParent) throws IOException {
         throw new UnsupportedOperationException("not implemented yet");
-//        FileEntry targetEntry = getEntry(targetIsParent ? target.resolve(toFilenameString(source)) : target, false);
+//        FileEntry targetEntry = getEntry(target, false);
 //        Files.move(sourceEntry.toPath(), targetEntry.toPath());
 //        return targetEntry;
     }

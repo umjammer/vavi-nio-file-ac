@@ -31,7 +31,7 @@ public final class AcFileStore extends FileStoreBase {
      *
      * @param disk the (valid) Commons VFS drive to use
      */
-    public AcFileStore(FormattedDisk disk, final FileAttributesFactory factory) {
+    public AcFileStore(FormattedDisk disk, FileAttributesFactory factory) {
         super("ac", factory, false);
         this.disk = disk;
     }
