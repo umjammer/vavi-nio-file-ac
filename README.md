@@ -9,7 +9,7 @@
 
 a java nio filesystem spi powered by [AppleCommander](https://github.com/AppleCommander/AppleCommander)
 
-all formats are mounted by fuse also!
+you can also mount all formats using fuse.
 
 ### Status
 
@@ -57,7 +57,7 @@ all formats are mounted by fuse also!
 
 ## TODO
 
- * check nested directory 3 ot more
+ * check nested directory 3 or more
  * raw disk access
 
 ---
